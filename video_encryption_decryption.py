@@ -17,8 +17,7 @@ from cv2 import *
 from moviepy.editor import *
 from moviepy import *
 import os
-from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad , unpad 
+import time
 import cv2
 #from tensorflow_docs.vis import embed
 
@@ -46,6 +45,33 @@ img1 = ImageTk.PhotoImage(Image.open(path))
 panel = tk.Label(window, image = img1)
 panel.place(x = 130, y = 230)
 
+def encrypt_imaage():
+    global filename
+    try:
+        global filenames
+    
+        filenames =  filename 
+        global countEnc
+        countEnc = 1 
+        print(filename)
+        time.sleep(1)    
+        # playing encrypted video ------------
+        source1 = cv2.VideoCapture('slide_show.mp4')
+        # running the loop
+        while True:
+            # extracting the frames
+            ret1, img1 = source1.read()
+            # displaying the video
+            cv2.imshow("Encrypted Video", img1)
+            # exiting the loop
+            key = cv2.waitKey(1)
+            if key == ord("q"):
+                break
+    except:
+        print("enter File First")
+    
+  
+    
 # function created for exiting
 def exit_win():
     if mbox.askokcancel("Exit", "Do you want to exit?"):
@@ -73,6 +99,9 @@ def open_file():
 # function to encrypt video and show encrypted video
 def encrypt_fun():
     global filename
+    global filenames
+    
+    filenames =  filename
     path_list = []
 
     # converting videos to images --------------------------------
@@ -172,8 +201,8 @@ def encrypt_fun():
 # function to decrypt video and show decrypted video
 def decrypt_fun():
     global filename
-    source = cv2.VideoCapture(filename)
-    print(filename)
+    source = cv2.VideoCapture(filenames)
+    print(filenames)
     # running the loop
     while True:
         # extracting the frames
@@ -186,7 +215,21 @@ def decrypt_fun():
         key = cv2.waitKey(1)
         if key == ord("q"):
             break
-
+         
+#decrypt frames by frames         
+def decrypt_imaage():
+    global filename
+    global countEnc
+    try:
+        if(countEnc) :
+            print(filename)
+            time.sleep(2.4)
+            decrypt_fun()    
+        else :
+            print("File not encrypted using AES")
+    except:
+        print("enter File First")
+  
 # function to reset the video to original video and show preview of that
 def reset_fun():
     global filename
@@ -203,7 +246,49 @@ def reset_fun():
         if key == ord("q"):
             break
 
+    
+def encrypt_image ():
+    
+    
+    global filename
+    Keysize = 16
+    blocksize = 16
+    
+    key = getkey(Keysize)
+    iv = getIV(blocksize)
+    BLOCKSIZE = 16
+    encrypted_filename =  filename
+    with open (filename, "rb") as filel:
+        data = filel.read()
+        cipher = AES.new(key,AES.MODE_CBC, iv)
+        ciphertext = cipher.encrypt (pad (data, BLOCKSIZE))
+        enc_file = open("AES/encrypted1.enc", "wb")
+        enc_file.write(ciphertext)
+        enc_file.close()
+    
+def decrypt_image():
+    global filename
+    Keysize = 16
+    blocksize = 16
+    key = getkey(Keysize)
+    iv = getIV(blocksize)
+    BLOCKSIZE = 16
+    decrypted_filename = filename
+    with open (filename, "rb") as file1:
+        data = file1.read()
+        cipher2 = AES.new (key, AES.MODE_CBC, iv) 
+        decrypted_data = unpad (cipher2.decrypt (data), BLOCKSIZE)
+        output_file = open("AES/output.jpg", "wb")
+        output_file.write(decrypted_data)
+        output_file.close()
+    
+def getkey(keysize):
+    key = os.urandom(keysize)
+    return key 
 
+def getIV(blocksize):
+    iv = os.urandom(blocksize)
+    return iv
 
 # top label
 start1 = tk.Label(text = "VIDEO  ENCRYPTION\nDECRYPTION", font=("Arial", 55, "underline"), fg="magenta") # same way bg
@@ -234,9 +319,12 @@ selectb.place(x = 80, y = 580)
 getb=Button(window1, text="RESET",command=reset_fun,  font=("Arial", 25), bg = "yellow", fg = "blue")
 getb.place(x = 420, y = 580)
 # Select Button
-selectb=Button(window1, text="ENCRYPT VIDEO using AES",command=encrypt_image,  font=("Arial", 25), bg = "orange", fg = "blue")
-selectb.place(x = 120, y = 450)
+selectb=Button(window1, text="ENCRYPT VIDEO AES",command=encrypt_imaage,  font=("Arial", 25), bg = "orange", fg = "blue")
+selectb.place(x = 620, y = 650)
 
+# Select Button
+selectb=Button(window1, text="DECRYPT VIDEO AES",command=decrypt_imaage,  font=("Arial", 25), bg = "orange", fg = "blue")
+selectb.place(x = 120, y = 650)
 def exit_win1():
     if mbox.askokcancel("Exit", "Do you want to exit?"):
         window1.destroy()
@@ -247,34 +335,3 @@ getb.place(x = 780, y = 580)
 
 window1.protocol("WM_DELETE_WINDOW", exit_win1)
 window1.mainloop()
-
-def encrypt_image ():
-    
-    global filename
-    Keysize = 16
-    blocksize = 16
-    
-    key = getkey(Keysize)
-    iv = getIV(blocksize)
-    BLOCKSIZE = 16
-    encrypted_filename =  filename
-    with open (filename, "rb") as filel:
-        data = filel.read()
-        cipher = AES.new (key, AES.MODE_CBC, iv)
-        ciphertext = cipher.encrypt (pad (data, BLOCKSIZE))
-        enc_file = open("encrypted1.enc", "wb")
-        enc_file.write(ciphertext)
-        enc_file.close()
-    return encrypted_filename
-
-def getkey(keysize):
-    key = os.urandom(keysize)
-    return key 
-
-def getIV(blocksize):
-    iv = os.urandom(blocksize)
-    return iv
-# def to_gif(images):
-#     converted_images = np.clip(images * 255, 0, 255).astype(np.uint8)
-#     imageio.mimsave('./animation.gif', converted_images, fps=25)
-#     return embed.embed_file('./animation.gif')
